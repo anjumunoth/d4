@@ -1,0 +1,228 @@
+Name:; Email id:; Username:
+
+Replication :
+Consistency
+
+CAP : 2 principles adhere 
+AP;
+eventual consistency
+
+Number of members in replica set: n
+write concern: 1,2,3,4.. n, "majority"
+Before updation : salary:0;
+update emp set salary =1000 where empId=101
+
+In a replica set (PSSSS)
+Scenario 1: write concern: 1
+client -- mongodb driver --> route it to primary --> perform the op--> give the ack back to the client --> various secondaries will sync with the primary
+
+Scenario 2: write concern: 2
+client -- mongodb driver --> route it to primary --> perform the op--> one of the secondaries will sync with the primary and complete the write op on its data -->give the ack back to the client --> various other secondaries will sync with the primary
+
+
+Scenario 3: write concern: 4
+client -- mongodb driver --> route it to primary --> perform the op--> three of the secondaries will sync with the primary and complete the write op on its data -->give the ack back to the client --> various other secondaries will sync with the primary
+
+Scenario 4: write concern: majority
+client -- mongodb driver --> route it to primary --> perform the op--> 2 of the secondaries will sync with the primary and complete the write op on its data -->give the ack back to the client --> various other secondaries will sync with the primary
+
+write concern : n
+Advantages : Fully consistent data
+Disadvantage: 
+a. response time is more
+b. if one of the secondary fails: n members have to complete the op to get the ack; writes will fail 
+
+
+time taken is more -- 2 members have to complete to op to get the ack;
+
+write concern:1
+primary finished the write and gave the ack to the client; but before the secondaries sync if the primary goes down, the data will be lost; 
+
+Best practice : write concern: majority
+
+Read intensive App : 5 servers(PSSSS)
+
+Secondary member -- sync with primary
+	Also make it to sync with another fully synced secondary
+
+Replica set : 15 members(n1.. n15); majority -- 8
+write concern :4
+Disadv : write concern :4
+
+update emp set salary=8000 where empId=101
+select * from emp where empId=101
+n1 --> primary
+write --> primary(n1) --> 3 sec(n2,n3,n4) have to sync --> ack--> others will sync
+same time read --> sec
+read --> n2  Updated data
+read --> n7 Stale data
+Out of 15 members; only 4 members will give update data (4/15)
+
+write concern : majority : Updated data (8/15)
+App requirement -- are u ok with only 25% prob of getting data
+
+read preference:
+a. primary -- default ;reads will be handled only by the primary
+b. primary preferred -- try to read from primary; if primary is unavialable; then read from the sec
+c. secondary -- reads will go to the secondaries only
+d. secondary preferred -- 
+In version 4.4 onwards
+read from a primary or secondary (based on a specified latency)
+e. nearest
+
+write -- will go only to primary
+reads -- synced secondaries with a latency less than specified latency
+
+Question:
+write intensive operation
+Multiple primaries:
+2 shards
+shard -- replica set;
+2 shards - 2 replica sets; 2 primaries
+
+
+Syncing:
+Collection : Table 
+Document : record
+8 member replica set:
+write concern: majority - 5
+write --> primary --> perform the operation --> primary will insert this write operation into a table named oplog;
+ each of the 4(4 out of total 7) secondaries asynchronously have to sync with the primary; copy the oplog entries from the primary; store it as part of their own oplog table and then perform the op on data which they hold; ack will be sent to the client;
+
+Syncing based on the priority: No
+
+create table emp(
+empId int primary key,
+empName varchar2(20) not null,
+salary int
+)
+
+mongodb : no schema 
+create collection -- no details about the schema
+
+data types in javascript: number, string, boolean, array, object
+
+mongodb -- support bson data types
+bson -- binary json; additional data type: int64, int32, decimal,ObjectId,null
+ObjectId -- 12 byte hexadecimal number;
+Constructed on basis on timestamp, machineid, process id, counter
+
+collection -- table
+document -- record or row -- json object
+{empId:101,empName:"sara",salary:5678,
+hobbies:["walking","singing",67]}
+
+Easiest way of creation a collection:
+db.emp.insertOne({empId:101,empName:"sara",salary:2345})
+
+
+Each collection will have a default index on _id created implicitly. Index will be dropped only when the collection is dropped 
+
+db.emp.insert() -- deprecated
+db.emp.insertMany([
+{empId:111,empName:"suresh",salary:123},
+{empId:112,empName:"ganesh",salary:23450},
+{empId:113,empName:"mahesh",salary:23425}])
+
+db.emp.insertMany([
+{empId:114,empName:"gita",salary:123},
+{empId:115,empName:"sita",salary:23450, _id:104},
+{empId:116,empName:"mira",salary:23425}])
+
+Answer: 115 will throw me error
+ 114 will get inserted; 115 will throw an error; 116 will not get executed
+ 
+
+
+C#
+Console.Writeline("welcome")
+int a=0;
+a=5/0;
+
+Bulk writes:
+export the data(json, csv)
+
+
+Read operations:
+db.emp.find(filter condition, projection)
+
+Equality
+db.emp.find({empId:101})
+
+Relational operators: $gt, $lt, $gte, $lte, $eq, $ne
+db.emp.find({salary:{$gt:5000}})
+
+db.emp.find({salary: {$ne: 5000}});// 108,109 be there in my result set
+108 and 109 will be there; others
+
+db.emp.find({salary: {$eq: 5000}});// 108,109 will not there 
+
+Logical operators:
+$and, $or, $not
+salary > 5000 and empId < 105
+db.emp.find({
+	$and:[{salary :{$gt:5000}},
+	      {empId:{$lt:105}}]
+}
+)
+
+db.emp.find({
+$or:[{salary:{$gt:5000}},{empId:{$lt:105}}]
+})
+
+
+Between 
+db.emp.find({salary:{$gt:5000,$lt:10000}})
+
+Born in 1980
+db.student.find({doj:{$gt:new Date(1980,0,1), $lt:new Date(1980,11,12)}})
+
+In operator
+db.emp.find({empId:{$in:[102,104,106,108]}})
+
+$and:
+db.emp.find({
+$and:[{empId:{$gt:105}},{salary:{$ne: 10000}}]})
+
+Another way of working with logical and
+db.emp.find({empId:{$gt:105},salary:{$ne: 10000}})
+
+db.emp.find({salary:{$lt:5000},salary:{$gt:10000}})
+Logically : Not correct
+Mongodb technically: 
+d. Docs which have a salary which is greater than 10000
+
+C#
+int a;
+a=10;
+a=20;
+Console.WriteLine(a);//20
+
+javascript:
+
+var emp1={empId:101,empName:"sraa",salary:1000}
+console.log(emp1);//{empId:101,empName:"sraa",salary:1000}
+var emp2={empId:101,empName:"sraa",salary:1000,empId:999}
+console.log(emp2);//{empId:999,empName:"sraa",salary:1000}
+var emp3={salary:5000,salary:10000}
+console.log(emp3);//{salary:10000}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

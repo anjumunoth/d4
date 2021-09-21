@@ -1,0 +1,333 @@
+Why nosql database?
+-- project requirements
+-- snapshots ; Mongodb --documents; RDBMS- tables
+-- no schema ; RDBMS - fixed rigid schema
+
+create table emp(
+empId int primary key,
+empName varchar2(20) not null,
+salary int
+)
+
+-- unstructured data, semi structured; structured
+BLOB, CLOB
+-- Big volumes of data
+
+-- Scalability -- Easy to scale up and scale down
+
+	Horizontal Scaling
+	Vertical Scaling
+Scenario 1: Vertical scaling:
+
+	Single server -- increase the CPU, RAM	
+Disadv: Single server goes down - Data availability
+
+Scenario 2: Horizontal scaling - multiple servers
+	3 servers
+	Black Friday: increase the number of servers to 10
+	Scaling up and scaling down
+
+CAP theorem -- nosql can adhere 2 of 3 principles
+Availabilty is more important than consistency
+Mongodb -- AP; eventual consistency
+
+SQL server - AGL - scaling in sql server
+1. complexity -- complex
+2. after nosql became famous -- horizontal scaling
+3. data server:restrictions
+
+Scalabliblty -- very simple in nosql 
+
+-- Availability 
+
+-- Indexes
+	Composite(multiple fields), clustered index(physical mem location);
+	Index on array field, embedded object; embedded object's field; wild card index(index on all the string fields);text index; geospatial; Partial indexes
+
+description: "Today is a beautiful day";
+Index entries :1 
+Mongodb : text index: Entries : 3/4/5 
+
+geospatial data:
+Pick up point: x Latitude, y Longitude
+destination: 
+cabs within of radius 2km will be notified
+
+cars which are closest distance
+
+-- Rich query language
+
+-- Sharding
+C: -- official
+D: -- personal
+Create a number of folders
+
+Search for a photo: D:/images
+Design doc for project A: c:/project
+
+Primary key: FileId
+
+Shard key: fileType
+FileType
+
+Easy to search : Performance: look through less number of docs
+Avoid table scan:
+
+Breaking up the data and storing the data in different physical servers
+
+Sharding at the collection level
+For each collection which has to be sharded -- select the shard key.
+Based on shard key, they will be stored in different shards
+
+mongos  -- router 
+shard server -- which is going to hold the data
+config server  -- meta information;
+	c: official
+	c:/ project a -- info related to project A
+
+EmpId : 1 to 10000
+Chunks: Continuous range of empId
+
+4 chunks: 1 to 2500; 2501 to 5000; 5001 to 7500; 7501 to 10000
+
+2 shards :
+shard A : 1 to 2500; 2501 to 5000;// records for these empId
+shard B: 5001 to 7500; 7501 to 10000;// records for these empId
+
+config server:
+Meta data
+Number of shards:2
+shard A:  1 to 2500; 2501 to 5000;
+shard B: 5001 to 7500; 7501 to 10000
+
+chunk size: 64mb default size
+
+shard-- database servers
+
+read operation based on shard key
+select * from emp where empId = 101
+client -->mongos (stateless router) --> ask for meta data from config server;--> contact shard A; chunk1; -- fetch the info from the shard and give it to the client;
+
+select * from emp where empId > 101 and empId <2000
+client -->mongos (stateless router) --> ask for meta data from config server;--> contact shard A; chunk1; -- fetch the info from the shard and give it to the client;
+
+select * from emp where empName like "s*"
+client --> mongos --> no use of config server--> broadcast the query to all the shards --> return the query's data --> merge the various results set --> client
+Performance has degraded
+
+Sharding: 
+a. Selection of shard key
+b. What are my maximum queries which are coming in
+70% queries -- empId
+10 % queries -- empName
+
+c. Memory -- huge volumes of data
+Each server will store -- 5000 records; 5000 gb -- sharding
+
+Without sharding capacity -- 10000 gb
+
+
+Capacity of c: -- 30 gb
+Capacity of d: -- 30 gb
+
+Memory : 60 gb
+
+Horizontal scaling:
+multiple servers
+
+Same data store it in different servers
+Redundancy; Denormalising
+
+1. Updation, Insertion, Reading
+2. Inconsistencies
+3. Acknowledgement -- Updation -- ack by all the servers
+4. Memory (wastage of memory)
+
+Advantage:
+Availabilty
+
+Replication: Same data stored in differnt physical servers
+
+Replica set: Collection of servers which hold the same dtaa
+
+2 types of servers:
+Primary server -- only one
+Secondary server(s) -- multiple
+
+Primary server -- All the reads , write are handled; -- default
+
+Secondary server -- Replicate the data which is in primary.
+	Sync with the primary asynchronously
+	Configure -- the reads can be configured to secondary
+
+Heart beat --
+2 sec -- each member exchanges a heart beat with others
+10 sec -- max time 
+
+secondary goes down -- no problem in terms of read/write; 
+
+primary goes down -- 
+reads -- configure -- sec can handle it
+write -- (10 sec -- primary is down); 
+
+automatic failover: election initiated; eligible sec become the primary-- 12 sec
+
+22 sec -- writes fail
+
+mondodb driver -- 1 retry
+
+connection string: 
+all the members of the replica set and write the name of the replica set
+
+mongodb driver -- write query-- route to the primary
+read query -- depending upon on configuration -- route to the primary to secondary
+
+Eligible Secondary
+
+Replica set -- 50 members in a replica set; 7 can vote in the election process
+Member of replica set
+Mongod server: Priority : int >=0; Votes : 0 or 1
+
+Eligible secondary : Member priority >0; vote can be 0 or 1;
+
+Election process:
+Modi
+Amit Shah
+Rajnath, UP cm; Atal;Smriti
+majority of BJP mp's vote
+common man will not vote
+
+Primary goes down
+Election process :
+Eligible secondaries : Sec priority >0
+
+1. Secondary which has maximum priority becomes the primary
+2. Members which has the same highest priority
+	member which has been the primary earlier --primary
+3. Members which have already been the primary
+	voting comes in -- majority
+	maximum of 7 voting members
+4. Tie: (If no arbiter)Round robin process 
+	If arbiter -- do the final selection
+
+Algorithm -- election process
+Replica set -- 10 members -- max 7 voting members
+Min numbers of members in replica set -1
+2 member replica set; 1 primary ; 1 secondary
+
+Best practice
+Odd numbers of members of replica set
+3 members in a replica set
+
+Availability; Getting a majority
+
+Arbiter --Part of replica set; Special secondary member;Not going to hold any data;
+Election process; Voting member ; Tie -- arbiter
+Priority: 0 ; Should not become the primary
+Votes: 1 ; 
+A replica set can have only one arbiter
+
+write op -- fail for 22 secs
+
+Node (N1(p10),n2(p7),n3(p6),n4(p4),n5(p4))
+N1 -- primary
+n1 goes down
+Election process: n2,n3,n4,n5
+New primary : n2 
+What will happen when n1 comes up -- be a secondary
+But there is a election for some reason --
+N1 -- primary( has been the primary earlier)
+
+
+
+When will all will take elections:
+1. When a replica set is initiated
+2. 
+
+
+Configure my replica set 7 members(N1 .. N7):
+a. Geographical locations
+b. Origin of query
+c. Queries -- region 
+d. Should be my primary in most of the situation
+
+US(n1(P2),n2(P2))
+EMEA(n3(P0),n4(P5))
+India(n5(Jammu - P10),n6(Mumbai - P7),n7(Gurgaon - P6))
+
+n5' s hardware will be better than n3's hardware;
+n5 --100 tb of memory
+n6 -- 10 tb of memory
+n3 -- non eligible secondary (min configuration)
+eligible sec -- similar better configuration
+
+
+70% of queries(write) are coming from India
+
+Probability : Primary : n5
+n5 -- primary
+Problem in Jammu -- Internet connectivity problem;
+
+Manually make another member the primary -- yes;
+Option a:add a new member with the highest priority
+Option b: Change node n6's priority to be the highest
+
+n5 goes down -- 22 secs;
+writes -- failing
+
+mongodb driver -- designed -- retry when writes are failing because the primary is down
+
+n6 -- becomes the primary --retry -- writes will be processed
+
+cassandra -- no primary; no secondary
+
+hardware does not play a role in election
+hardware will affect the performance(memory,speed) of the query
+
+data availability -- will not be problem
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+ 
+Database -- Number of collections
+
+
+
+
+
+
+
+
