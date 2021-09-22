@@ -1,0 +1,157 @@
+
+insertMany() -- insert many documents; exception -- stopped
+
+import the data -- checkup
+a. stop on errors
+b. insert all of those docs which do not have errors 
+
+bulk.write
+
+Name:; emailid:;username:;
+
+mongoose -- ORM -- nodejs
+
+dot net -- EFcore; repository pattern
+
+Capped collection:
+Restriction on number of docs or on the size of the collection
+
+Capped collection sample1: 20gb
+
+Current size of sample1: 18gb
+Insertions : 4gb 
+
+a. 18gb + 4gb == 22 gb
+delete the first 2gb -- delete the docs from the first(order of insertion)
+20gb;
+
+Usecase: capped collection:
+logs ; session data;login; auditing data; oplog
+
+Q: insertion:
+oplog -- read only capped collection
+
+Q: capped collection: store for 1 month;
+delete duplicated data 
+delete based on time -- TTL index
+
+distinct
+
+Arrays:
+1. All the docs where one of the elements in the loc is greater than 40
+{loc:{$gt:40}}
+2. Exact match:
+ {"loc": [-72.622739, 42.070206]}
+
+3. Match an array against a subset of elements:
+db.student.insertMany([
+{studId:101,studName:"asha",marks:[10,20,30]},
+{studId:102,studName:"sasha",marks:[20,30,10]},
+{studId:103,studName:"gita",marks:[10,70,80]},
+{studId:104,studName:"sita",marks:[10,55,90]},
+{studId:105,studName:"priya",marks:[80,90,90]},
+{studId:106,studName:"piyush",marks:[30,20,10]}
+])
+
+Requirement: 104
+db.student.find({marks:{$gt:35,$lt:60}});//103,104
+
+db.student.find({marks:{$elemMatch:{$gt:35,$lt:60}}})
+
+
+1. db.student.find({marks:[10,20,30]});//101
+
+2. Contains these elements:
+ db.student.find({marks:{$all:[10,20,30]}});//101;102;106
+
+3. All the students who have a mark in the range 35 to 60
+
+db.student.find({marks:{$gt:35,$lt:60}});//104,103
+db.student.find({marks:{$elemMatch:{$gt:35,$lt:60}}});//104
+
+4. All the students who have scored a mark 20 as part of their second year: 101,106
+
+db.student.find({marks:{$elemMatch:{$eq:20}}});//101,102,106
+
+db.student.find({"marks.1":20});
+
+db.student.find({marks:{$size:3}})
+
+Objects:
+{$and:[{"grades.score":2},{"grades.grade":"B"}]}
+
+{grades:{$elemMatch:{"score":2,"grade":"B"}}}
+
+
+
+
+
+
+between operator
+
+db.emp.find(salary:{$gt:5000,$lt:10000})
+
+
+Data modelling:
+Embedded modelling
+Referenced model
+
+
+Posts, comments
+Posts -- postId, description
+comments -- (commentId, postId), comment, userName, time
+Joins of the 2 table
+
+Data model in mongodb
+Embedded model
+
+Posts Collection:
+{
+_id:"P101",
+postId:"P101",
+description:"My first post",
+comments:[
+{commentId:"c101",comment:"Excellent",userName:"asha",time:ISODATE(2021-09-22)},
+{commentId:"c102",comment:"Excellent",userName:"asha",time:ISODATE(2021-09-22)}
+]
+}
+
+emp
+dept
+
+Referenced model:
+2 collections: emp,dept
+emp:
+{
+empId:101,
+empName:"asha",
+deptId:ObjectId(1234);
+}
+
+dept:
+{
+deptId:ObjectId(1234),
+deptName:"d1"
+}
+
+empName, deptName
+No joins
+2 step process
+empName, deptId
+deptId , deptName
+
+views
+Mongodb: emp Left outer join dept
+
+
+
+
+
+
+
+ 
+
+
+
+
+
