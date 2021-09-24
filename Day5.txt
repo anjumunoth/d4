@@ -1,0 +1,199 @@
+db.stud.insertMany([
+{studId:101,studName:"asha",marks:[10,20,30]},
+{studId:102,studName:"sasha",marks:[20,30,10]},
+{studId:103,studName:"gita",marks:[10,70,80]},
+{studId:104,studName:"sita",marks:[10,55,90]},
+{studId:105,studName:"priya",marks:[80,90,90]},
+{studId:106,studName:"piyush",marks:[30,20,10]}
+])
+
+update emp set salary=1000 where empId=101
+
+db.emp.updateOne({empId:101},{$set:{lastName:"mehta"}})
+
+db.emp.updateOne({empId:101},{$push:{hobbies:"gardening"}})
+Add a new field hobbies as an array ; To the array, append "gardening"
+db.emp1.updateOne({empId:101},{$set:{lastName:"mehta"}})
+
+
+db.emp1.updateOne({empId:101},{$push:{hobbies:"gardening"}})
+
+Append a new element "singing" to the hobbies array for empId:101
+db.emp1.updateOne({empId:101},{$push:{hobbies:"singing"}})
+db.emp1.updateOne({empId:101},{$push:{hobbies:"singing"}});
+
+
+Append 2 elements "eating","sleeping" to the hobbies array for empId:101
+//Mukesh -- will add as a sub array
+db.emp1.updateOne({empId:101},{$push:{hobbies:["Exercise","Music"]}})
+
+db.emp1.updateOne({empId:101},{$push:{hobbies:{"eating","sleeping"}}});// syntax error
+
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["eating","sleeping"]}}})
+
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["trekking"]}}})
+
+Update lastname and add "h1" to the hobbies
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["h1"]}},$set:{lastName:"goyal"}})
+
+
+Add a new element to hobbies at a particular position:
+
+Add "coding" at the beginning:
+$position :
+Rule : $position should be used along with $each
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["coding"],$position:0}}})
+
+Add 2 elements h2,h3 to the hobbies array at the position 2 for empId:101
+// Shruthi
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["h1","h2"],$position:1}}});
+
+//MZ
+db.emp1.updateOne({empId:103},{$push:{hobbies:{$each:["t1","t2"],$position:0}}})
+
+$slice
+Rule : $slice should be used along with $each
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["t1","t2"],$slice:8}}})
+
+Add 2 elements t1,t2 and keep the size of the array as 8 but t1,t2 should be there in the array
+
+//Mahendra
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["t1","t2"],$position:6,$slice:8}}})
+
+//MZ: delete all elements of the array for the record
+db.emp1.updateOne({empId:103},{$push:{hobbies:{$each:[],$slice:0}}})
+
+Remove the array element for empId:103
+db.emp1.updateOne({empId:103},{$unset:{hobbies:1}})
+
+$sort:
+Rule : $sort should be used along with $each
+
+1. Only sort the existing elements
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:[],$sort:1}}})
+
+2. Add some elements g1,g2 to the array and sort the elements:
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["G1","G2"],$sort:1}}})
+//Shruthi
+db.emp1.updateOne({empId:101},{$push:{hobbies:{$each:["G1","G2"],$sort:1}}});
+
+$push : 4 op: $each,$position, $slice, $sort
+
+Positional operator: $
+
+db.student.insertMany([
+{studId:101,studName:"asha",marks:[10,20,30]},
+{studId:102,studName:"sasha",marks:[20,30,10]},
+{studId:103,studName:"gita",marks:[10,70,80]},
+{studId:104,studName:"sita",marks:[10,55,90]},
+{studId:105,studName:"priya",marks:[80,90,90]},
+{studId:106,studName:"piyush",marks:[30,20,10]}
+])
+
+db.stud.updateMany({marks:10},{$set:{"marks.$":22}})
+
+db.stud.updateMany({marks:90},{$set:{"marks.$":33}})
+db.stud.updateMany({},{$set:{"marks.$":33}});//error
+
+db.stud.find({},{"marks.$":1}})
+
+foreach()
+{
+Console.WriteLine(item);
+}
+
+main()
+{
+int i;
+i++;//throw an error
+Console.WriteLine(i);
+}
+All the elements in the array which have a mark greater than 20 should be updated to 75
+db.stud.updateMany({marks:{$gt:20}},{$set:{"marks.$":75}}); // will update only the first instance greater than 20
+
+db.stud.updateMany({studId:101},
+{$set:{"marks.$[el]":75}},
+{arrayFilters:[{el:{$gt:20}}]})
+
+db.stud.updateMany({},
+{$set:{"marks.$[el]":75}},
+{arrayFilters:[{el:{$gt:20}}]})
+
+Add a subject details(array of objects) to studId 101
+db.stud.updateMany({studId:101},
+{$push:{subject:{subjectId:"s1",subjectName:"Maths"}}})
+
+Change the subject Id to s6 whenever the subjectName starts with s
+db.stud.updateMany({studId:101},
+{$set:{"subject.$[el].subjectId":"s6"}},
+{arrayFilters:[{"el.subjectName":/^s/i}]}
+)
+
+Array operator :$[]
+db.stud.updateOne({studId:102,marks:{$gt:30}},
+{$set:{"marks.$[]":100}})
+
+db.stud.updateMany({studId:103},
+{$push:{grades:{gradeId:"g1",scores:[10,20,30]}}})
+
+db.stud.updateMany({studId:103},
+{$push:{grades:{gradeId:"g2",scores:[10,15,16]}}})
+
+db.stud.updateMany({studId:103},
+{$push:{grades:{gradeId:"g3",scores:[50,19,30]}}})
+
+
+Combination : $[], $[el]
+db.stud.updateMany(
+{studId:103},
+{$set:{"grades.$[el1].scores.$[el2]":33}},
+{arrayFilters:[{el2:{$gte:20}},{"el1.gradeId":{$in:["g1","g3"]}}
+]})
+
+db.stud.updateMany(
+{},
+{$set:{"grades.$[el1].scores.$[el2]":33}},
+{arrayFilters:[{el2:{$gte:20}},{"el1.gradeId":{$in:["g1","g3"]}}
+]})
+
+db.stud.find(
+{marks:{$not:{$elemMatch:{$ne:75}}}
+})
+
+db.stud.find(
+{marks:{$elemMatch:{$eq:75}}
+})
+
+replace a document
+
+db.emp.replaceOne({empId:103},{firstName:"bill",lastName:"gates"});
+//{firstName:"bill",lastName:"gates",_id:6149eca2aaafd4f54821441e}
+
+Delete a document:
+db.emp.deleteOne({empId:104})
+
+Identity column:
+_id: insert our values; 
+
+
+mongodb -- no sql - no schema -- restriction -- identity column, number, incremental counter
+
+From application -- maintain it as identity field
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
