@@ -1,0 +1,188 @@
+{marks:{$elemMatch:{$gt:10, $lt:60}}}
+
+All the marks should be greater than 60
+{marks:{$gt:60}}
+
+Sort the fields:
+
+db.emp.find().sort({salary:1})
+db.emp.find().sort({salary:-1})
+
+db.emp.find().sort({salary:1,empName:-1})
+
+select top 10 from emp where salary>1000 order by empName
+1. where condition
+2. order by
+3. select 10
+
+
+101, ... 110
+
+db.emp.find().limit(5);//5 docs -- 101 to 105; insertion order
+
+db.emp.find({empId:{$gte:105}}).limit(2);//105,106
+
+skip
+db.emp.find().skip(3);//7 docs; 104 -- 110
+
+db.emp.find({empId:{$gte:105}}).skip(3);//108 -- 110
+
+db.emp.find({}).limit(5).skip(5);//106-110; 
+db.emp.find({}).skip(5).limit(5);//106-110
+
+db.emp.find().limit(3).skip(5);//106- 108
+
+
+collation: language specific comparison rules for string comaprison
+Document:
+Mandatory : locale:language which i am working with
+locale: "simple" -- binary comparison
+
+collation:
+{
+   locale: <string>,
+   caseLevel: <boolean>,
+   caseFirst: <string>,
+   strength: <int>,
+   numericOrdering: <boolean>,
+   alternate: <string>,
+   maxVariable: <string>,
+   backwards: <boolean>
+}
+
+strength: 1,2,3,4,5
+
+strength : 1 : primary : base characters
+strength : 2 : secondary : base characters, diacritics
+strength : 3 : tertiary : base characters,diacritics,case
+		default
+strength :4 : quaternary: 1-3,punctuation
+
+Requirement : comparison : base char, case
+strength:1, caseLevel: true;// case sensitive comaprison
+strength:3; caseLevel: true;//no need of giving caseLevel
+
+
+caseFirst:
+"lower","upper"
+
+numericOrdering: boolean
+
+25 <100
+"25" > "100"
+
+numericOrdering :true; //"25"<"100"
+default: false
+
+db.getCollection('catalogLines').find({fromDate:{$eq:"2020-02-10T23:25:00+00:00"}})
+
+db.getCollection('catalogLines').find({fromDate:{$gt:"2020-02-10T23:25:00+00:00",$lt:"2020-04-10T23:25:00+00:00"}})
+
+
+japanese:
+store the data as it is
+
+comparison: empName
+
+collation:{locale:"jp",strength:4}
+
+db.emp.find().sort({empName:1}).collation({locale:"en",caseFirst:"upper"})
+
+Projection:
+
+db.emp.find({},{empId:1,empName:1})
+Objects, embedded fields
+
+Array projection operators:
+$slice 
+
+$ -- positional operator
+Rule: Filter condition should be based on the array
+db.student.find({marks:{$gt:60},studId:{$gte:104}},{studId:1,_id:0,"marks.$":1})
+
+$elemMatch:
+db.student.find({},{studId:1,_id:0,marks:{$elemMatch:{$gt:20}}})
+
+db.student.find({marks:{$elemMatch:{$gt:20}}},{studId:1,_id:0,marks:{$elemMatch:{$gt:20}}})
+
+Q: convert to a particular format -- aggregation methods
+
+db.emp.find().count()
+
+db.emp.find({empId:{$gt:105}}).count()
+
+
+Update operations:
+update() -- deprecated
+updateOne() -- update a single matching doc
+updateMany() -- update all the matching doc(s)
+
+updateOne(filter condition,how to update)
+
+$set, $unset
+db.emp.updateOne({empId:101},{$set:{salary:1000}})
+
+db.emp.updateOne({empId:101},{$set:{salary:1000,empName:"ganesh"}})
+
+db.emp.updateOne({empId:101},{$set:{salary:1000,empName:"ganesh",location:"BLR"}})
+
+update emp set empName=empName+"Mr."
+update emp set salary=salary+1000;
+update emp set salary=salary*10%;
+
+db.emp.updateOne({empId:101},{$inc:{salary:1000}})
+
+
+
+
+$unset:
+$inc, $mul
+$rename
+
+Array updations:
+db.emp.updateOne({empId:101},{$set:{lastName:"Mehta"}})
+
+db.emp.updateOne({empId:101},{$push:{hobbies:"singing"}})
+
+
+1. $each: 
+Used to add multiple elements
+
+2. $position:
+Rule : $position should always be used with $each
+
+3. $slice:
+Rule: $slice should always be used with $each
+
+4. $sort:
+Rule: $sort should always be used with $each
+
+
+Q. Find the desc order of array elements of hobbies incl the sub array
+Sort acc to array field
+db.emp.find({empId:101}).sort({hobbies:1})
+
+
+Sort the array elements within the doc for only printing purpose
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
