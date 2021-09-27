@@ -1,0 +1,327 @@
+Aggregation pipeline -- Most important features
+ls | wc
+ls | grep
+
+Multiple stages
+Output of a stage becomes the next input stages
+
+For each stage:
+a. Input
+b. Operation
+c. Output
+
+db.zipcode.aggregate([{},{}])
+select sum(pop) as "SumOfPop" from zipcode group by state
+1. from zipcode
+2. group of distinct state
+3. sum(pop) as "SumOfPop"
+
+db.zipcode.aggregate([{
+$group:{
+	_id:"$state",
+	"SumOfPop":{$sum:"$pop"}
+}
+}
+])
+
+
+1. select sum(pop) from zipcode
+
+
+db.sample.insertMany([{ "_id" : 1, "name" : "Susan Wilkes", "scores" : [ 87, 86, 78 ] },
+{ "_id" : 2, "name" : "Bob Hanna", "scores" : [ 71, 64, 81 ] },
+{ "_id" : 3, "name" : "James Torrelio", "scores" : [ 91, 84, 97 ] }])
+
+
+db.sample.aggregate( [
+  {
+    $project:
+      {
+        "name" : 1,
+        "summary" :
+        {
+          $switch:
+            {
+              branches: [
+                {
+                  case: { $gte : [ { $avg : "$scores" }, 90 ] },
+                  then: {
+	$concat:["doing great with the average",{$toString:{$avg:"$scores"}}]
+			}
+                },
+                {
+                  case: { $and : [ { $gte : [ { $avg : "$scores" }, 80 ] },
+                                   { $lt : [ { $avg : "$scores" }, 90 ] } ] },
+                  then: "Doing pretty well."
+                },
+                {
+                  case: { $lt : [ { $avg : "$scores" }, 80 ] },
+                  then: {$avg:"$scores"}
+                }
+              ],
+              default: "No scores found."
+            }
+         }
+      }
+   }
+] )
+
+db.zipcode.aggregate([{
+$group:{
+	_id:"$state",
+	"SumOfPop":{$sum:"$pop"},
+  "AvgOfPop":{$avg:"$pop"},
+  "MaxPop":{$max:"$pop"},
+  "MinPop":{$min:"$pop"},
+  "Count of docs":{$count:{}}
+}
+}
+])
+
+4.2 :
+db.zipcode.aggregate([{
+$group:{
+	_id:"$state",
+	"SumOfPop":{$sum:"$pop"},
+  "AvgOfPop":{$avg:"$pop"},
+  "MaxPop":{$max:"$pop"},
+  "MinPop":{$min:"$pop"},
+  "Count of docs":{$sum:1}
+}
+}
+])
+
+$project
+db.zipcode.aggregate([{
+$group:{
+	_id:"$state",
+	"SumOfPop":{$sum:"$pop"},
+  "AvgOfPop":{$avg:"$pop"},
+  "MaxPop":{$max:"$pop"},
+  "MinPop":{$min:"$pop"},
+  "Count of docs":{$sum:1}
+}
+},
+{
+$project:
+{
+"SumOfPop":1,
+"AvgOfPop":1,
+"MaxPop":1,
+  "MinPop":1,
+  "Count of docs":1,
+  "State":"$_id",
+  _id:0
+},
+
+},
+{$sort:{State:1}}
+])
+
+db.zipcode.aggregate([{$group: {
+  _id: "$state",
+  "SumOfPop": {
+    $sum: "$pop"  }
+}}, {$project: {
+  _id:0,
+  "State":"$_id",
+  "SumOfPop":1
+}}, {$sort: {
+  "SumOfPop":1
+}}])
+
+select sum(pop) from zipcode group by state,city
+1. from zipcode
+2. group by state and city
+3. sum(pop) for each group
+
+db.zipcode.aggregate([
+{
+	$group:
+  {	
+  	_id:{f1:"$state",f2:"$city"},
+    "Total Population":{$sum:"$pop"}
+  }
+},
+{
+	$sort:
+  {
+   	"_id.f1":1,
+    
+    "_id.f2":1,
+    "Total Population":-1
+  }
+},
+{
+	$project:
+  {
+  	_id:0,
+    "State ":"$_id.f1",
+    
+    "Total Population":1
+  }
+}
+
+])
+
+
+State :"texas","max pop":5467890, city :"abc"
+
+db.zipcode.aggregate([
+{
+	$group:
+  	{
+    	_id:{state:"$state",city:"$city"},
+      SumOfPop:{$sum:"$pop"}
+    }
+},
+{
+	$sort:{SumOfPop:1}
+},
+{
+	$group:
+  {
+  	_id:"$_id.state",
+    "MaxPop":{$last:"$SumOfPop"},
+    "City":{$last:"$_id.city"}
+  }
+},
+{$sort:{_id:1}}
+])
+
+state:"s1","max pop":678,city:"c1"
+
+
+For each state, sort the documents according to the pop for each citu
+db.zipcode.aggregate([
+{
+$group:
+	{
+  	_id:{state:"$state",city:"$city"},
+    SumOfPop:{$sum:"$pop"}
+  }
+},
+{
+	$sort:
+  {	
+  	"_id.state":1,
+    "SumOfPop":-1
+  }
+}
+])
+
+db.emp.renameCollection("zipcode")
+
+Sum of Pop for all the records
+select sum(pop) from zipcode
+
+db.zipcode.aggregate([
+{
+	$group:
+  	{
+    	_id:null,
+      "Total Pop":{$sum:"$pop"}
+    	}
+}
+])
+
+Add new field in the project stage
+
+//MZ - Group population by state and sort by descending with population
+db.zipcode.aggregate([
+  {
+    $group:{
+      _id:"$state",
+      "SumOfPop":{$sum:"$pop"}
+    }
+  },
+  {
+    $project:{
+      "SumOfPop":1,
+      "State":"$_id",
+      _id:0
+    }
+  },
+  {
+    $sort:{SumOfPop:-1}
+  }
+  ])
+  
+
+$limit stage
+$skip stage
+$count
+$match
+
+select sum(pop),state from zipcode where pop >1000 group by state
+1. where pop >1000 -- $match
+2. group by state  -- $group
+3. sum(pop) -- $project
+
+select sum(pop),state from zipcode group by state having sum(pop)>50000
+1. group by state -- $group
+2. check if sum(pop) >50000 --$match
+3. sum(pop) -- $project
+
+
+select sum(pop) from zipcode where pop >1000 group by state having sum(pop)>50000
+1. where pop >1000 -- $match
+2. group by state -- $group
+3. check if sum(pop)>50000 -- $match
+4. sum(pop),state -- $project
+[{$match: {
+  pop:{$gt:1000}
+}}, {$group: {
+  _id: "$state",
+  "Total Population": {
+    $sum: "$pop"
+  }
+}}, {$sort: {
+  "Total Population": 1
+}}, {$match: {
+  "Total Population":{$gt:8888888}
+}}, {$project: {
+  state:"$_id",
+  "Total Population":1,
+  _id:0
+}}]
+
+
+select sal, sal*.1 as bonus from emp
+select lower(empName) from emp
+
+select floor(sal) from emp
+[{$match: {
+  pop:{$gt:1000}
+}}, {$group: {
+  _id: "$state",
+  "Total Population": {
+    $sum: "$pop"
+  }
+}}, {$sort: {
+  "Total Population": 1
+}}, {$match: {
+  "Total Population":{$gt:8888888}
+}}, {$project: {
+  state:"$_id",
+  "Total Population":1,
+  _id:0,
+  "StateInLower":{$toLower:"$_id"},
+  "currentDate":"$$NOW",
+  "currentYear":{$year:"$$NOW"}
+}}]
+
+Stages in aggregation pipeline: $group, $project,$sort, $match, $skip,$limit,$count
+
+1.Display the distinct city in each state
+
+2.Display the number of restaurants that serve cuisine "Bakery"
+{cuisine:"Bakery",NumberofRest:10}
+
+3. Display all the restaurants which serve in zipcode "10462"
+
+4. calculate the total marks for each student
+
+5. Display count of all the restaurants which are in borough "Bronx" and zipcode "10462" and score greater than 10
+
+6. Display only those state and city which have a total pop > 100000
