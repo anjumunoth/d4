@@ -1,0 +1,201 @@
+Aggregation Stages:
+
+$match,$group,$project,$count,$skip, $limit,$bucket,$bucketAuto,
+$unwind
+
+$unwind:
+[{$unwind: {
+  path:"$grades"
+
+ }}, {$group: {
+  _id: "$name",
+  "Total Score": {
+    $sum: "$grades.score"
+  }
+}}, {$project: {
+  "Restaurant Name":"$_id",
+  _id:0,
+  "Total Score":1,
+  "Current Date":{$toDate:"28-9-2021"},
+  "Current Date Dynamic":"$$NOW"
+}}]
+
+{
+  "Name" : "$name",
+  "Total score": {
+    $reduce :{
+      input: "$grades.score",
+      initialValue: 0,
+      in: {$add : ["$$value", "$$this"] }
+   }
+   },
+   "Current Date" : {"$toDate" : new Date()},
+   "Current Date Dynamic" : "$$NOW",
+   _id: 0
+}
+
+$lookup:
+
+Left outer join
+select * from emp left outer join department on emp.deptId= department.deptId
+(matching rows , unmatched rows of the left table(emp) )
+expensive, performance intensive
+
+Mongodb -- No joins
+
+Data modelling:
+embedded documents
+referenced documents
+
+Mongodb -- way to implement left outer join
+
+java -- support multiple inheritance, can implement multiple inheritance
+
+aggregation pipeline
+$look up
+
+db.projects.insertMany([{projectId:"P101",projectName:"Store Front",projectDescription:"E Commerce Application"},
+{projectId:"P102",projectName:"CueBack",projectDescription:"Social Networking"},
+{projectId:"P103",projectName:"Premium Access",projectDescription:"Digital Course Library"},
+{projectId:"P104",projectName:"Freegal Music",projectDescription:"Libary of Songs"},
+{projectId:"P105",projectName:"Comlink Data",projectDescription:"Data Science"}])
+
+db.employee.insertMany([{empId:101,empName:"Sara",projectId:"P101"},
+{empId:102,empName:"Keshav",projectId:"P101"},
+{empId:103,empName:"Saurabh",projectId:"P102"},
+{empId:104,empName:"Giri",projectId:"P102"},
+{empId:105,empName:"Saraansh",projectId:"P103"},
+{empId:106,empName:"Piyush",projectId:"P106"},
+{empId:107,empName:"Neha",projectId:"P104"},
+{empId:108,empName:"Priyam",projectId:"P105"},
+{empId:109,empName:"Pranav",projectId:"P105"},
+{empId:110,empName:"Puja",projectId:"P106"}])
+
+select * from employee left outer join projects on employee.projectId=project.projectId
+db.employee.aggregate([{$lookup: {
+  from: 'projects',
+  localField: 'projectId',
+  foreignField: 'projectId',
+  as: 'ProjectDetails'
+}}])
+
+select * from projects left outer join employee on employee.projectId=project.projectId
+db.projects.aggregate([{$lookup: {
+  from: 'employee',
+  localField: 'projectId',
+  foreignField: 'projectId',
+  as: 'Employee Details'
+}}])
+
+Advantages of indexing in mongodb:
+
+1. Various types of indexes:
+Index on single field
+Index on composite field
+Unique index
+
+Index on array field
+Index on object
+Index on embedded field
+Index on documents which satisfy a condition(salary > 5000)
+Sparse Index
+Index on all the fields which hold a string value
+Text index
+TTL Index
+Hashed index
+
+Create the index :
+
+Simple index:
+Sort order is not important
+db.collectionname.createIndex({state:1})
+
+whitefield -- bannergatta
+
+whitefield - Marathahalli -- bannergatta
+whitefield - vartur -- bannergatta
+whitefield - j p nagar -- bannergatta
+
+google maps
+least traffic, estimated time, time of travel, diversion
+
+On basis of a number of factors, which is the best route
+winning plan
+rejected plan
+
+
+Composite index :
+Index on multiple fields
+a. Order of fields very important
+b. Sort order is also important
+
+db.zipcode.createIndex({state:1,city:-1},{name:"state_1_city_-1"})
+
+db.zipcode.find({state:"MA",city:"AGAWAM"});//yes
+db.zipcode.find({city:"AGAWAM",state:"MA"});//yes
+db.zipcode.find({state:"MA"});//yes
+db.zipcode.find({city:"AGAWAM"});//no
+
+db.zipcode.find({}).sort({state:1});//yes
+db.zipcode.find({}).sort({state:-1});//yes
+db.zipcode.find({}).sort({city:-1});//no
+db.zipcode.find({}).sort({city:1});//no
+
+db.zipcode.find({}).sort({state:1,city:-1});//yes
+db.zipcode.find({}).sort({state:-1,city:-1});//no
+db.zipcode.find({}).sort({state:-1,city:1});//yes
+db.zipcode.find({}).sort({state:1,city:1});//no
+db.zipcode.find({}).sort({city:-1,state:1});//no
+
+db.zipcode.find({state:"MA"}).sort({city:-1});//yes
+db.zipcode.find({city:"AGAWAM"}).sort({state:-1});//yes
+
+Create 2 indexes
+1. Single index : {state :1}
+2. Composite index :{state:1,city:-1}
+
+db.zipcode.find({city:"AGAWAM"});//no indexes
+db.zipcode.find({state:"MA"});//which index ; why
+
+Have 2 indexes on restaurant_id (simple, unique)
+db.restaurant.find({restaurant_id:"5678"});//which index and why
+
+
+Index on object
+db.restaurant.createIndex({address:1})
+
+Index on embedded field :
+db.restaurant.createIndex({"address.zipcode":1})
+
+Multi key index: Index on an array field
+db.zipcode.createIndex({"loc":1})
+
+Composite index :
+Can one of the fields be an array or object or embedded object field : yes
+
+Properties:
+1. Unique
+Not allow duplicates
+Allow only null
+
+Can a composite unique index be created - combination of fields should be unique
+Can a unique index be created on field which already has a simple index on the same field-- data is unique;sort order should be different
+
+db.restaurant.createIndex({restaurant_id:1},{unique:true})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
