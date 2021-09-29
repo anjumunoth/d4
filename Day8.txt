@@ -1,0 +1,173 @@
+Indexes -- most important feature
+Types of indexes:
+1. Single index
+Compound index - index of multiple fields
+Index on object field
+Index on embedded field 
+Index on array field -- Multi key
+Unique Index 
+Sparse Index 
+Partial Index -- Index on the doc which satisfy condition(s)
+TTL Index -- Delete the documents after an expiry timeperiod
+Hashed Index -- Evenly spaced index
+Text Index 
+Wild card index -- index on all the fields which hold the string value
+Geospatial index 
+
+Single index:
+Sort order is not important
+
+db.zipcode.createIndex({state:1})
+
+Compound Index:
+Index on multiple fields:
+db.zipcode.createIndex({state:1,city:-1});//state_1_city_-1
+
+Order of fields is very important
+Sort order is very important
+
+db.zipcode.find({state:"MA"})
+db.zipcode.find({city:"MA"});//not going to use index
+db.zipcode.find({state:"MA",city:"AGAWAM"})
+db.zipcode.find({city:"AGAWAM",state:"MA"})
+
+select * from zipcode order by state,city
+select * from zipcode order by city,state
+
+india -- doha--US
+india -- dubai--US
+india -- europe-- US
+india -- australia -- US
+
+india -- dubai -- US; number of stops; total time to travel; financial
+winning plan
+
+db.zipcode.find().sort({state:1,city:-1});//yes
+db.zipcode.find().sort({state:-1,city:1});//yes
+db.zipcode.find().sort({state:1,city:1});//no
+db.zipcode.find().sort({state:-1,city:-1});//no
+
+db.zipcode.find({state:"MA"}).sort({city:-1});//yes
+db.zipcode.find({city:"AGAWAM"}).sort({state:1});//yes
+
+
+db.zipcode.createIndex({state:1,city:-1,town:1})
+db.zipcode.find().sort({state:1,city:-1,town:1});//yes
+db.zipcode.find().sort({state:-1,city:1,town:-1});//yes
+
+Index on an object
+db.zipcode.createIndex({address:1},{name:"index1"})
+
+Index on an embedded field
+db.zipcode.createIndex({"address.zipcode":1},{name:"index2"})
+
+{"address.zipcode":"10462"};// searching for a field value match;//index2
+{"address":{"zipcode":"10462"}};//searching for a doc which has only 1 field(zipcode) as part of the address object and zipcode :10462 ;//index1
+
+Will the result set be same : no
+
+Index on an array -- Multi key index
+
+Properties on indexes
+1. Unique
+_id : Unique index
+Not allow duplicates
+Allow one null
+db.restaurant.createIndex({restaurant_id:1},{unique:true})
+
+2. Sparse
+db.sample.createIndex({name:1},{sparse:true})
+Only those docs which have the name field will be taken up for the index creation
+
+
+3. Partial
+4. TTL
+
+Hashed 
+Text index
+Geospatial index
+
+Partial index:
+db.zipcode.createIndex({pop:1},{partialFilterExpression:{"pop":{"$gt":10000}}})
+
+db.zipcode.find({state:1}).hint({state:1});//forcing to use simple index
+
+db.zipcode.find({state:1}).hint({$natural:1});//forcing to use no indexes
+
+
+TTL index: total time to live
+Restriction: TTL index can be created only on a date field or an array which has date values
+
+db.sample1.createIndex({doj:1},{expireAfterSeconds:300})
+when 300 secs elapse since the doj field for a
+particular document,it will delete that document
+
+Use case : Logs , session data
+
+ttl index : 1 month
+memory -- 100mb
+capped collection -- cannot create the ttl index
+
+TTl index must be on date field
+
+Capped collection : cap on either the number of docs or total size of collection
+
+books -- capped collection -- size :20mb
+
+Now current size: 15mb
+insertion : 10 mb
+5mb of data will be removed (acc to insertion order)
+
+oplog -- capped collection
+
+toDate_1_fromDate_1
+Compound index : toDate : asc; fromDate :asc
+Queries:
+sort({toDate:1})
+sort({toDate:1,fromDate:1})
+sort({toDate:-1,fromDate:-1})
+find({toDate:"2021-02-09"})
+
+system functions:
+sort(memory size)// no
+select sum(sal),deptId from emp group by deptId order by 1
+selelct * from emp order by 1;// create table order
+
+aggregate method
+[{$group: {
+  _id: "$state",
+  "Total StateWise Pop": {
+    $sum  :"$pop"
+  }
+}}, {$sort: {
+  "Total StateWise Pop":  1
+}}]
+
+Hashed Index:
+Instead of creating the index entries on the exzct value, the hashed values are used for creating the index
+Hashed index is used only for equality checks
+Hashed indexes are better for equal distribution of index entries
+
+empId : 1 to 10000
+normal index : 1
+hashed index : empId
+
+Insert some docs empId 11000 to 12000
+normal index -- right side of tree will have more data ; so need rebalancing
+hashed index : all need not be in the right nodes; so rebalancing will be lesser
+
+Geospatial index:
+
+Text index:
+
+
+
+
+
+
+ 
+
+
+
+
+
