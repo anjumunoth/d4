@@ -1,0 +1,139 @@
+Text index :
+Single,
+compound field -- one can be a text index, another can be a asc index
+
+db.restaurant.createIndex({name:text})
+For example:
+name:"Morris Park Bake Shop"
+
+Index entries : Morris , Park, Bake, Shop
+
+products:
+productId,productName,description
+db.products.createIndex({productName:text,description:text},{weights:{productName:20,description:10}})
+
+db.products.insertOne({productId:101,productName:"Apple Iphone 13 pro max",description:"Latest model of iphone is iphone 13 pro max. Flagship model of iphone"})
+db.products.insertOne({productId:102,productName:"Samsung note 15 max",description:"Best phone in samsung"})
+db.products.insertOne({productId:103,productName:"Apple ",description:"An apple a day kkeps the doctor away"})
+
+search : Apple
+101: Score: 1 *20 +0*10=20
+103: Score : 20+10=30
+
+search: iphone:
+101:50
+
+Performance of text index:
+1. Useful
+2. Size of the text index : Huge
+3. Text indexes per collection:1
+4. Number of index entries -- slow up the query
+
+
+
+Replication:
+Storing the same data in differnt physical servers
+
+Redundancy:
+Availability
+
+Replica set :
+50 members
+7 of them can be eligible to vote 
+
+Primary - 1
+Secondary - many
+Arbiter - 1 - non data bearing member; votes-1 ; vote in the election process
+
+Zero priority secondary member: priority -0; can never become a primary; should sync with the primary
+
+Hidden member : priority -0; cannot become the primary; Invisible from the client; cant handle any reads or writes;Use cases: Generate reports, take back up of data; should sync with the primary
+
+
+Delayed member :sync with the primary after a delay(configurable);
+should never become the primary; priority:0; votes : 0 or 1
+Use cases : Prevent loss of data
+
+Heartbeat : A node is running
+Each member exchanges a heartbeat with every member every 2 seconds
+primary is down -- > election process
+
+3 replica set
+PSS
+
+mongod --port 3001 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data1" --replSet d4Rs1
+
+mongod --port 3002 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data2" --replSet d4Rs1
+
+mongod --port 3003 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data3" --replSet d4Rs1
+
+Initiate the replica set
+mongo --port 3001
+
+rs.initiate({
+_id:"d4Rs1",
+members:[
+{_id:0,host:"localhost:3001"},
+{_id:1,host:"localhost:3002"},
+{_id:2,host:"localhost:3002"}
+]
+})
+
+Mukesh: rs.initiate()
+ok:1
+rs.add("localhost:1001")
+rs.add({_id:1,host:"localhost:3002"})
+rs.add({_id:2,host:"localhost:3002"})
+
+new index on populated collection(30 million docs): simple index 
+
+index -- background; foreground
+index creation -- various types of locks
+best practice : create the index -- background process
+
+4th member -- priority - 10; votes:1
+
+mongod --port 3004 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data4" --replSet d4Rs1
+
+rs.secondaryOk()
+Connect to the primary
+
+rs.add({_id:3,host:"localhost:3004",priority:10,votes:1})
+
+when all will elections be conducted
+1. when primary is down
+2. when rs.initiate is conducted
+3. when a new member is added with the highest priority
+4. whenever the replica set is reconfigured
+
+
+Add an arbiter
+mongod --port 3005 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data5" --replSet d4Rs1
+
+Connect to the primary
+rs.addArb("localhost:3005")
+
+Add a zero priority secondary member:
+mongod --port 3006 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data6" --replSet d4Rs1
+
+Connect to the primary
+rs.add({_id:5,host:"localhost:3006",priority:0})
+
+Add a hidden secondary member:
+mongod --port 3007 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data7" --replSet d4Rs1
+
+Connect to the primary
+rs.add({_id:6,host:"localhost:3007",hidden:true,priority:0})
+
+Add a delayed member:
+mongod --port 3008 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\replication\data8" --replSet d4Rs1
+Connect to the primary
+rs.add({_id:7,host:"localhost:3008",slaveDelay:300,priority:0})
+
+
+
+
+
+
+
+ 
