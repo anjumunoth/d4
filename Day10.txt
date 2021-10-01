@@ -1,0 +1,138 @@
+Replication:
+same data is replicated across different servers
+
+
+Sharding:
+
+breaking up the data and storing in different servers
+
+Why sharding?
+1.data size -- very large ;; 
+2. writes -- multiple nodes which can be handle
+
+multiple shards -- servers which hold the data
+Each shard is a replica set
+2 shards -- 2 primary for handling writes
+
+3. geographical distributed
+
+sharding
+
+1. mongos -- stateless router
+2. shards -- actually hold the data
+3. config server -- hold the meta data
+
+client --> mongos --> give request to config server to get the meta data about the shard--> talk to the corresponding shard for the data --> return it the client
+
+
+shard -- replica set 
+config server -- replica set
+
+Architecture 
+2 shards PSS
+
+shard1:PSS
+
+Open 3 command prompts
+
+mongod --port 5001 --shardsvr --replSet d4s1 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data1"
+
+mongod --port 5002 --shardsvr --replSet d4s1 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data2"
+
+mongod --port 5003 --shardsvr --replSet d4s1 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data3"
+
+Connect mongo to one of the above servers
+mongo --port 5001
+rs.initiate({
+_id:"d4s1",
+members:[
+{_id:0,host:"localhost:5001"},
+{_id:1,host:"localhost:5002"},
+{_id:2,host:"localhost:5003"}
+]
+})
+
+
+For shard2 :
+mongod --port 5004 --shardsvr --replSet d4s2 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data4"
+
+mongod --port 5005 --shardsvr --replSet d4s2 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data5"
+
+mongod --port 5006 --shardsvr --replSet d4s2 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data6"
+
+Connect mongo to one of the above servers
+mongo --port 5004
+rs.initiate({
+_id:"d4s2",
+members:[
+{_id:0,host:"localhost:5004"},
+{_id:1,host:"localhost:5005"},
+{_id:2,host:"localhost:5006"}
+]
+})
+
+
+config server -- PSS
+mongod --port 5007 --configsvr --replSet d4cs1 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data7"
+
+mongod --port 5008 --configsvr --replSet d4cs1 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data8"
+
+mongod --port 5009 --configsvr --replSet d4cs1 --dbpath "C:\Users\anjum\OneDrive\Desktop\Dell_mongodbBatch4\sharding\data9"
+
+Connect mongo to one of the above servers
+mongo --port 5007
+rs.initiate({
+_id:"d4cs1",
+members:[
+{_id:0,host:"localhost:5007"},
+{_id:1,host:"localhost:5008"},
+{_id:2,host:"localhost:5009"}
+]
+})
+
+
+Connect the mongos(router) with the config server
+mongos --configdb "d4cs1/localhost:5007" --port 5010
+
+Open a new command prompt
+mongo --port 5010
+
+Should get the follwing prompt:
+mongos>
+sh.addShard("d4s1/localhost:5001")
+sh.addShard("d4s2/localhost:5004")
+
+
+Manually split the chunk:
+
+splitAt
+Split it into chunks at the doc which satsfies the condition
+sh.splitAt("shardDb1.zipcode",{state:"MA"})
+
+splitFind
+Split the chunk into roughly two equal halves which has state:"CT"
+sh.splitFind("shardDb1.zipcode",{state:"CT"})
+
+Database -100 collections
+100 -- db.collectionName.deleteMany({})
+
+script
+use dellDbBatch4
+var MyCollections=db.getCollections();
+MyCollections.forEach(item=>{
+	db.getCollection(item).deleteMany({});
+})
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
